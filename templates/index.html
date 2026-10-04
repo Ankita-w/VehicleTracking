@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Autonomous Vehicle</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+
+    margin: 0;
+
+    font-family: Arial, sans-serif;
+
+    background: #eef2f7;
+
+    color: #222;
+}
+
+header {
+
+    background: #172b4d;
+
+    color: white;
+
+    text-align: center;
+
+    padding: 22px;
+}
+
+header h1 {
+
+    margin: 0 0 8px 0;
+
+}
+
+main {
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: flex-start;
+
+    gap: 20px;
+
+    padding: 25px 15px;
+
+    flex-wrap: wrap;
+
+}
+
+.card {
+
+    background: white;
+
+    width: 350px;
+
+    padding: 22px;
+
+    border-radius: 15px;
+
+    box-shadow: 0 5px 15px #bbb;
+
+}
+
+.card h2 {
+
+    color: #172b4d;
+
+    margin-top: 0;
+
+}
+
+.card p {
+
+    padding: 10px 0;
+
+    border-bottom: 1px solid #ddd;
+
+}
+
+.value {
+
+    float: right;
+
+    font-weight: bold;
+
+}
+
+.camera {
+
+    width: 100%;
+
+    height: 270px;
+
+    background: black;
+
+    border-radius: 10px;
+
+    overflow: hidden;
+
+    margin-bottom: 15px;
+
+}
+
+#camera {
+
+    width: 100%;
+
+    height: 100%;
+
+    object-fit: cover;
+
+}
+
+button {
+
+    padding: 12px 18px;
+
+    margin: 5px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: #172b4d;
+
+    color: white;
+
+    cursor: pointer;
+
+}
+
+.traffic-light {
+
+    background: #222;
+
+    width: 100px;
+
+    padding: 10px;
+
+    margin: 15px auto;
+
+    border-radius: 18px;
+
+}
+
+.light {
+
+    width: 55px;
+
+    height: 55px;
+
+    border-radius: 50%;
+
+    margin: 8px auto;
+
+    opacity: 0.2;
+
+}
+
+.red {
+    background: red;
+}
+
+.yellow {
+    background: yellow;
+}
+
+.green {
+    background: limegreen;
+}
+
+.active {
+    opacity: 1;
+}
+
+.signal-card {
+    text-align: center;
+}
+
+#objects {
+
+    min-height: 30px;
+
+    font-weight: bold;
+
+}
+
+#message {
+
+    text-align: center;
+
+    color: #555;
+
+}
+
+footer {
+
+    text-align: center;
+
+    padding: 20px;
+
+    color: #666;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<h1>
+Autonomous Vehicle
+</h1>
+
+<p>
+Without Road Markings
+</p>
+
+</header>
+
+
+<main>
+
+
+<div class="card">
+
+<h2>
+Vehicle Status
+</h2>
+
+<p>
+Status:
+
+<span
+class="value"
+id="status">
+READY
+</span>
+
+</p>
+
+<p>
+Direction:
+
+<span
+class="value"
+id="direction">
+WAIT
+</span>
+
+</p>
+
+<p>
+Obstacle:
+
+<span
+class="value"
+id="obstacle">
+NONE
+</span>
+
+</p>
+
+<p>
+Route:
+
+<span
+class="value"
+id="route">
+READY
+</span>
+
+</p>
+
+</div>
+
+
+<div class="card signal-card">
+
+<h2>
+Traffic Signal
+</h2>
+
+<div class="traffic-light">
+
+<div
+class="light red"
+id="red">
+</div>
+
+<div
+class="light yellow"
+id="yellow">
+</div>
+
+<div
+class="light green"
+id="green">
+</div>
+
+</div>
+
+<h3 id="signalText">
+RED - STOP
+</h3>
+
+</div>
+
+
+<div class="card">
+
+<h2>
+Mobile Camera Detection
+</h2>
+
+<div class="camera">
+
+<video
+id="camera"
+autoplay
+playsinline>
+</video>
+
+</div>
+
+<button onclick="startCamera()">
+START CAMERA
+</button>
+
+<button onclick="stopCamera()">
+STOP CAMERA
+</button>
+
+<p id="message">
+Press START CAMERA
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h2>
+Detected Objects
+</h2>
+
+<div id="objects">
+None
+</div>
+
+</div>
+
+</main>
+
+
+<footer>
+
+Autonomous Vehicle Without Road Markings
+
+</footer>
+
+
+<script>
+
+let stream = null;
+
+let detectionTimer = null;
+
+let canvas =
+document.createElement("canvas");
+
+const video =
+document.getElementById("camera");
+
+const message =
+document.getElementById("message");
+
+
+async function startCamera() {
+
+    try {
+
+        stream =
+        await navigator.mediaDevices.getUserMedia({
+
+            video: {
+
+                facingMode: "environment"
+
+            },
+
+            audio: false
+
+        });
+
+        video.srcObject = stream;
+
+        message.innerText =
+        "Camera started";
+
+        clearInterval(
+            detectionTimer
+        );
+
+        detectionTimer =
+        setInterval(
+            sendFrame,
+            1500
+        );
+
+    }
+
+    catch(error) {
+
+        console.log(error);
+
+        message.innerText =
+        "Camera permission denied";
+
+        alert(
+            "Please allow camera permission."
+        );
+
+    }
+
+}
+
+
+function stopCamera() {
+
+    clearInterval(
+        detectionTimer
+    );
+
+    if(stream) {
+
+        stream
+        .getTracks()
+        .forEach(
+            track => track.stop()
+        );
+
+        stream = null;
+
+    }
+
+    video.srcObject = null;
+
+    document.getElementById(
+        "status"
+    ).innerText = "STOPPED";
+
+    document.getElementById(
+        "direction"
+    ).innerText = "STOP";
+
+    message.innerText =
+    "Camera stopped";
+
+}
+
+
+async function sendFrame() {
+
+    if(
+        !stream ||
+        video.readyState < 2
+    ) {
+
+        return;
+
+    }
+
+    canvas.width =
+    video.videoWidth;
+
+    canvas.height =
+    video.videoHeight;
+
+    const context =
+    canvas.getContext("2d");
+
+    context.drawImage(
+
+        video,
+
+        0,
+
+        0,
+
+        canvas.width,
+
+        canvas.height
+
+    );
+
+    canvas.toBlob(
+
+        async function(blob) {
+
+            const formData =
+            new FormData();
+
+            formData.append(
+
+                "frame",
+
+                blob,
+
+                "camera.jpg"
+
+            );
+
+            try {
+
+                const response =
+                await fetch(
+
+                    "/detect",
+
+                    {
+
+                        method: "POST",
+
+                        body: formData
+
+                    }
+
+                );
+
+                const data =
+                await response.json();
+
+                updateDashboard(
+                    data
+                );
+
+            }
+
+            catch(error) {
+
+                console.log(error);
+
+            }
+
+        },
+
+        "image/jpeg",
+
+        0.7
+
+    );
+
+}
+
+
+function updateDashboard(data) {
+
+    if(data.error) {
+
+        message.innerText =
+        data.error;
+
+        return;
+
+    }
+
+    document.getElementById(
+        "status"
+    ).innerText =
+    data.status;
+
+    document.getElementById(
+        "direction"
+    ).innerText =
+    data.direction;
+
+    document.getElementById(
+        "obstacle"
+    ).innerText =
+    data.obstacle;
+
+    document.getElementById(
+        "route"
+    ).innerText =
+    data.route;
+
+    updateSignal(
+        data.signal
+    );
+
+    let objectText = "";
+
+    if(
+        data.objects &&
+        data.objects.length > 0
+    ) {
+
+        data.objects.forEach(
+            function(object) {
+
+                objectText +=
+
+                object.name +
+
+                " (" +
+
+                object.confidence +
+
+                "%)<br>";
+
+            }
+        );
+
+    }
+
+    else {
+
+        objectText =
+        "No object detected";
+
+    }
+
+    document.getElementById(
+        "objects"
+    ).innerHTML =
+    objectText;
+
+}
+
+
+function updateSignal(signal) {
+
+    document.getElementById(
+        "red"
+    ).classList.remove(
+        "active"
+    );
+
+    document.getElementById(
+        "yellow"
+    ).classList.remove(
+        "active"
+    );
+
+    document.getElementById(
+        "green"
+    ).classList.remove(
+        "active"
+    );
+
+    if(signal === "RED") {
+
+        document.getElementById(
+            "red"
+        ).classList.add(
+            "active"
+        );
+
+        document.getElementById(
+            "signalText"
+        ).innerText =
+        "RED - STOP";
+
+    }
+
+    else if(signal === "YELLOW") {
+
+        document.getElementById(
+            "yellow"
+        ).classList.add(
+            "active"
+        );
+
+        document.getElementById(
+            "signalText"
+        ).innerText =
+        "YELLOW - WAIT";
+
+    }
+
+    else {
+
+        document.getElementById(
+            "green"
+        ).classList.add(
+            "active"
+        );
+
+        document.getElementById(
+            "signalText"
+        ).innerText =
+        "GREEN - GO";
+
+    }
+
+}
+
+</script>
+
+</body>
+
+</html>
