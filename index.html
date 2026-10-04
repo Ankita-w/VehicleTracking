@@ -1,108 +1,596 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>Ankita's Portfolio</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Autonomous Vehicle Tracking</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111827;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .camera-box {
+            max-width: 700px;
+            margin: 20px auto;
+            background: #1f2937;
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        video {
+            width: 100%;
+            border-radius: 12px;
+            background: black;
+        }
+
+        button {
+            padding: 12px 20px;
+            margin: 8px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #startBtn {
+            background: #22c55e;
+            color: white;
+        }
+
+        #stopBtn {
+            background: #ef4444;
+            color: white;
+        }
+
+        .buttons {
+            text-align: center;
+        }
+
+        .dashboard {
+            max-width: 700px;
+            margin: auto;
+        }
+
+        .card {
+            background: #1f2937;
+            margin: 15px 0;
+            padding: 18px;
+            border-radius: 12px;
+        }
+
+        .value {
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        #objects {
+            line-height: 1.8;
+        }
+
+        .signal {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .light {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: #374151;
+        }
+
+        .active-red {
+            background: red;
+        }
+
+        .active-yellow {
+            background: yellow;
+        }
+
+        .active-green {
+            background: green;
+        }
+    </style>
 </head>
 
 <body>
 
-<nav>
-    <h2>Ankita</h2>
-    <div>
-        <a href="#about">About</a>
-        <a href="#skills">Skills</a>
-        <a href="#education">Education</a>
-        <a href="#projects">Projects</a>
-        <a href="#contact">Contact</a>
-    </div>
-</nav>
+    <h1>🚗 Autonomous Vehicle Tracking</h1>
 
-<section class="hero">
-    <h1>Hello, I'm Ankita 👋</h1>
-    <p>Computer Science Engineering Student</p>
-    <a href="#skills"><button>View My Skills</button></a>
-    <a href="resume.pdf" download>
-    <button>Download Resume</button>
-</a>
+    <div class="camera-box">
 
-    
+        <video id="camera" autoplay playsinline></video>
 
-<section id="about">
-    <h2>About Me</h2>
-    <p>
-        I am a Computer Science Engineering student interested
-        in Web Development, Java and Software Development.
-    </p>
-</section>
+        <div class="buttons">
+            <button id="startBtn">START CAMERA</button>
+            <button id="stopBtn">STOP CAMERA</button>
+        </div>
 
-<section id="skills">
-    <h2>My Skills</h2>
-    <div class="skills-container">
-
-    <div class="skill-card">
-        <h3>Java</h3>
-        <p>Object Oriented Programming</p>
     </div>
 
-    <div class="skill-card">
-        <h3>HTML</h3>
-        <p>Web Page Structure</p>
+
+    <div class="dashboard">
+
+        <div class="card">
+            <h2>Vehicle Status</h2>
+
+            <p>Status:</p>
+            <div class="value" id="status">
+                READY
+            </div>
+
+            <p>Direction:</p>
+            <div class="value" id="direction">
+                WAIT
+            </div>
+
+            <p>Obstacle:</p>
+            <div class="value" id="obstacle">
+                NONE
+            </div>
+
+            <p>Route:</p>
+            <div class="value" id="route">
+                NORMAL ROUTE
+            </div>
+        </div>
+
+
+        <div class="card">
+
+            <h2>🚦 Traffic Signal</h2>
+
+            <div class="signal">
+
+                <div id="red" class="light"></div>
+
+                <div id="yellow" class="light"></div>
+
+                <div id="green" class="light"></div>
+
+            </div>
+
+            <p class="value" id="signalText">
+                WAIT
+            </p>
+
+        </div>
+
+
+        <div class="card">
+
+            <h2>📦 Detected Objects</h2>
+
+            <div id="objects">
+                No objects detected
+            </div>
+
+        </div>
+
     </div>
 
-    <div class="skill-card">
-        <h3>CSS</h3>
-        <p>Web Page Styling</p>
-    </div>
 
-    <div class="skill-card">
-        <h3>SQL</h3>
-        <p>Database Management</p>
-    </div>
+    <canvas id="canvas" style="display:none;"></canvas>
 
-</div>
-</section>
 
-<section id="education">
-    <h2>Education</h2>
-    <p>B.Tech - Computer Science Engineering</p>
-</section>
+    <script>
 
-<section id="projects">
-    <h2>My Projects</h2>
+        const video =
+            document.getElementById("camera");
 
-    <div class="project">
-        <h3>Student Management System</h3>
-        <p>Java based project for managing student records.</p>
-    </div>
+        const canvas =
+            document.getElementById("canvas");
 
-    <div class="project">
-        <h3>Personal Portfolio Website</h3>
-        <p>A website created using HTML and CSS.</p>
-    </div>
+        const startBtn =
+            document.getElementById("startBtn");
 
-    <div class="project">
-        <h3>Bank Management System</h3>
-        <p>A Java project for basic banking operations.</p>
-    </div>
-</section>
+        const stopBtn =
+            document.getElementById("stopBtn");
 
-<section id="contact">
-    <h2>Contact Me</h2>
 
-    <p>Email: ankita@example.com</p>
+        let stream = null;
 
-    <p>
-        <a href="https://github.com/" target="_blank">GitHub</a>
-    </p>
+        let detectionTimer = null;
 
-    <p>
-        <a href="https://www.linkedin.com/" target="_blank">LinkedIn</a>
-    </p>
-</section>
-    <h2>Contact</h2>
-    <p>Email: ankita@example.com</p>
-</section>
+
+        // ==========================
+        // START CAMERA
+        // ==========================
+
+        startBtn.addEventListener(
+            "click",
+            async function () {
+
+                try {
+
+                    stream =
+                        await navigator.mediaDevices.getUserMedia({
+
+                            video: {
+                                facingMode: {
+                                    ideal: "environment"
+                                }
+                            },
+
+                            audio: false
+
+                        });
+
+
+                    video.srcObject = stream;
+
+                    document.getElementById("status")
+                        .innerText = "RUNNING";
+
+
+                    startDetection();
+
+
+                } catch (error) {
+
+                    console.error(error);
+
+                    alert(
+                        "Please allow camera permission."
+                    );
+
+                }
+
+            }
+        );
+
+
+        // ==========================
+        // STOP CAMERA
+        // ==========================
+
+        stopBtn.addEventListener(
+            "click",
+            function () {
+
+                stopCamera();
+
+            }
+        );
+
+
+        function stopCamera() {
+
+            if (stream) {
+
+                stream
+                    .getTracks()
+                    .forEach(
+                        track => track.stop()
+                    );
+
+                stream = null;
+
+            }
+
+
+            video.srcObject = null;
+
+
+            if (detectionTimer) {
+
+                clearInterval(
+                    detectionTimer
+                );
+
+                detectionTimer = null;
+
+            }
+
+
+            document.getElementById("status")
+                .innerText = "READY";
+
+
+            document.getElementById("direction")
+                .innerText = "WAIT";
+
+        }
+
+
+        // ==========================
+        // START DETECTION
+        // ==========================
+
+        function startDetection() {
+
+            if (detectionTimer) {
+
+                clearInterval(
+                    detectionTimer
+                );
+
+            }
+
+
+            detectionTimer =
+                setInterval(
+                    sendFrame,
+                    1500
+                );
+
+        }
+
+
+        // ==========================
+        // SEND FRAME TO FLASK
+        // ==========================
+
+        async function sendFrame() {
+
+            if (!stream) {
+
+                return;
+
+            }
+
+
+            if (video.readyState < 2) {
+
+                return;
+
+            }
+
+
+            canvas.width =
+                video.videoWidth;
+
+            canvas.height =
+                video.videoHeight;
+
+
+            const context =
+                canvas.getContext("2d");
+
+
+            context.drawImage(
+                video,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+
+            canvas.toBlob(
+                async function (blob) {
+
+                    if (!blob) {
+
+                        return;
+
+                    }
+
+
+                    const formData =
+                        new FormData();
+
+
+                    formData.append(
+                        "frame",
+                        blob,
+                        "camera.jpg"
+                    );
+
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                "/detect",
+                                {
+                                    method: "POST",
+                                    body: formData
+                                }
+                            );
+
+
+                        const data =
+                            await response.json();
+
+
+                        console.log(
+                            "Detection:",
+                            data
+                        );
+
+
+                        if (data.error) {
+
+                            console.error(
+                                data.error
+                            );
+
+                            return;
+
+                        }
+
+
+                        updateDashboard(data);
+
+
+                    }
+
+                    catch (error) {
+
+                        console.error(
+                            "Detection error:",
+                            error
+                        );
+
+                    }
+
+                },
+                "image/jpeg",
+                0.75
+            );
+
+        }
+
+
+        // ==========================
+        // UPDATE DASHBOARD
+        // ==========================
+
+        function updateDashboard(data) {
+
+            document.getElementById(
+                "status"
+            ).innerText =
+                data.status || "READY";
+
+
+            document.getElementById(
+                "direction"
+            ).innerText =
+                data.direction || "WAIT";
+
+
+            document.getElementById(
+                "obstacle"
+            ).innerText =
+                data.obstacle || "NONE";
+
+
+            document.getElementById(
+                "route"
+            ).innerText =
+                data.route || "NORMAL ROUTE";
+
+
+            document.getElementById(
+                "signalText"
+            ).innerText =
+                data.signal || "WAIT";
+
+
+            updateSignal(
+                data.signal
+            );
+
+
+            updateObjects(
+                data.objects
+            );
+
+        }
+
+
+        // ==========================
+        // TRAFFIC SIGNAL
+        // ==========================
+
+        function updateSignal(signal) {
+
+            const red =
+                document.getElementById("red");
+
+            const yellow =
+                document.getElementById("yellow");
+
+            const green =
+                document.getElementById("green");
+
+
+            red.className = "light";
+
+            yellow.className = "light";
+
+            green.className = "light";
+
+
+            if (signal === "RED") {
+
+                red.className =
+                    "light active-red";
+
+            }
+
+            else if (signal === "YELLOW") {
+
+                yellow.className =
+                    "light active-yellow";
+
+            }
+
+            else if (signal === "GREEN") {
+
+                green.className =
+                    "light active-green";
+
+            }
+
+        }
+
+
+        // ==========================
+        // OBJECTS
+        // ==========================
+
+        function updateObjects(objects) {
+
+            const objectBox =
+                document.getElementById(
+                    "objects"
+                );
+
+
+            if (
+                !objects ||
+                objects.length === 0
+            ) {
+
+                objectBox.innerText =
+                    "No objects detected";
+
+                return;
+
+            }
+
+
+            let html = "";
+
+
+            objects.forEach(
+                function (object) {
+
+                    html +=
+                        "🔹 " +
+                        object.name +
+                        " — " +
+                        object.confidence +
+                        "%<br>";
+
+                }
+            );
+
+
+            objectBox.innerHTML =
+                html;
+
+        }
+
+    </script>
 
 </body>
+
 </html>
