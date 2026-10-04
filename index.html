@@ -1,600 +1,108 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Autonomous Vehicle Tracking</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #eef2f7;
-            color: #172b4d;
-            margin: 0;
-            padding: 20px;
-        }
-
-        h1 {
-            text-align: center;
-        }
-
-        .box {
-            max-width: 700px;
-            margin: 20px auto;
-            background: white;
-            padding: 20px;
-            border-radius: 18px;
-            box-shadow: 0 5px 20px #0002;
-        }
-
-        video {
-            width: 100%;
-            border-radius: 12px;
-            background: black;
-        }
-
-        button {
-            padding: 14px 20px;
-            margin: 8px 4px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            color: white;
-            background: #172f55;
-        }
-
-        .value {
-            font-size: 22px;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-
-        .signal {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin: 15px;
-        }
-
-        .light {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: #ccc;
-        }
-
-        .red {
-            background: red;
-        }
-
-        .yellow {
-            background: yellow;
-        }
-
-        .green {
-            background: green;
-        }
-
-        #objects {
-            font-size: 18px;
-        }
-    </style>
+    <title>Ankita's Portfolio</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <h1>🚗 Autonomous Vehicle Tracking</h1>
+<nav>
+    <h2>Ankita</h2>
+    <div>
+        <a href="#about">About</a>
+        <a href="#skills">Skills</a>
+        <a href="#education">Education</a>
+        <a href="#projects">Projects</a>
+        <a href="#contact">Contact</a>
+    </div>
+</nav>
 
-    <div class="box">
+<section class="hero">
+    <h1>Hello, I'm Ankita 👋</h1>
+    <p>Computer Science Engineering Student</p>
+    <a href="#skills"><button>View My Skills</button></a>
+    <a href="resume.pdf" download>
+    <button>Download Resume</button>
+</a>
 
-        <h2>📱 Mobile Camera Detection</h2>
+    
 
-        <video id="camera" autoplay playsinline muted></video>
+<section id="about">
+    <h2>About Me</h2>
+    <p>
+        I am a Computer Science Engineering student interested
+        in Web Development, Java and Software Development.
+    </p>
+</section>
 
-        <div style="text-align:center;">
-            <button onclick="startCamera()">START CAMERA</button>
-            <button onclick="stopCamera()">STOP CAMERA</button>
-        </div>
+<section id="skills">
+    <h2>My Skills</h2>
+    <div class="skills-container">
 
-        <p id="cameraStatus">Camera not started</p>
-
+    <div class="skill-card">
+        <h3>Java</h3>
+        <p>Object Oriented Programming</p>
     </div>
 
-
-    <div class="box">
-
-        <h2>🚘 Vehicle Status</h2>
-
-        <p>Status</p>
-        <div class="value" id="status">READY</div>
-
-        <p>Direction</p>
-        <div class="value" id="direction">WAIT</div>
-
-        <p>Obstacle</p>
-        <div class="value" id="obstacle">NONE</div>
-
-        <p>Route</p>
-        <div class="value" id="route">NORMAL ROUTE</div>
-
+    <div class="skill-card">
+        <h3>HTML</h3>
+        <p>Web Page Structure</p>
     </div>
 
-
-    <div class="box">
-
-        <h2>🚦 Traffic Signal</h2>
-
-        <div class="signal">
-            <div id="redLight" class="light"></div>
-            <div id="yellowLight" class="light"></div>
-            <div id="greenLight" class="light"></div>
-        </div>
-
-        <div class="value" id="signalText">
-            WAIT
-        </div>
-
+    <div class="skill-card">
+        <h3>CSS</h3>
+        <p>Web Page Styling</p>
     </div>
 
-
-    <div class="box">
-
-        <h2>📦 Detected Objects</h2>
-
-        <div id="objects">
-            None
-        </div>
-
+    <div class="skill-card">
+        <h3>SQL</h3>
+        <p>Database Management</p>
     </div>
 
-
-    <canvas id="canvas" style="display:none;"></canvas>
-
-
-<script>
-
-let stream = null;
-let detecting = false;
-
-
-// ===============================
-// START CAMERA
-// ===============================
-
-async function startCamera() {
-
-    try {
-
-        if (!navigator.mediaDevices ||
-            !navigator.mediaDevices.getUserMedia) {
-
-            alert("Camera is not supported by this browser.");
-            return;
-
-        }
-
-
-        stream = await navigator.mediaDevices.getUserMedia({
-
-            video: {
-                facingMode: {
-                    ideal: "environment"
-                },
-
-                width: {
-                    ideal: 640
-                },
-
-                height: {
-                    ideal: 480
-                }
-            },
-
-            audio: false
-
-        });
-
-
-        const video =
-            document.getElementById("camera");
-
-        video.srcObject = stream;
-
-        await video.play();
-
-
-        document.getElementById(
-            "cameraStatus"
-        ).innerText = "Camera started";
-
-
-        detecting = true;
-
-        detectLoop();
-
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Camera error:",
-            error
-        );
-
-        document.getElementById(
-            "cameraStatus"
-        ).innerText =
-            "Camera error: " + error.message;
-
-    }
-
-}
-
-
-// ===============================
-// STOP CAMERA
-// ===============================
-
-function stopCamera() {
-
-    detecting = false;
-
-
-    if (stream) {
-
-        stream.getTracks().forEach(
-            function(track) {
-                track.stop();
-            }
-        );
-
-        stream = null;
-
-    }
-
-
-    document.getElementById(
-        "camera"
-    ).srcObject = null;
-
-
-    document.getElementById(
-        "cameraStatus"
-    ).innerText =
-        "Camera stopped";
-
-}
-
-
-// ===============================
-// DETECTION LOOP
-// ===============================
-
-async function detectLoop() {
-
-    if (!detecting) {
-        return;
-    }
-
-
-    await sendFrame();
-
-
-    setTimeout(
-        detectLoop,
-        2000
-    );
-
-}
-
-
-// ===============================
-// SEND FRAME TO FLASK
-// ===============================
-
-async function sendFrame() {
-
-    const video =
-        document.getElementById("camera");
-
-    const canvas =
-        document.getElementById("canvas");
-
-
-    if (!stream) {
-        return;
-    }
-
-
-    if (
-        video.readyState <
-        HTMLMediaElement.HAVE_CURRENT_DATA
-    ) {
-
-        return;
-
-    }
-
-
-    if (
-        video.videoWidth === 0 ||
-        video.videoHeight === 0
-    ) {
-
-        return;
-
-    }
-
-
-    canvas.width =
-        video.videoWidth;
-
-    canvas.height =
-        video.videoHeight;
-
-
-    const ctx =
-        canvas.getContext("2d");
-
-
-    ctx.drawImage(
-        video,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
-
-
-    canvas.toBlob(
-
-        async function(blob) {
-
-            if (!blob) {
-                return;
-            }
-
-
-            const formData =
-                new FormData();
-
-
-            formData.append(
-                "frame",
-                blob,
-                "camera.jpg"
-            );
-
-
-            try {
-
-                const response =
-                    await fetch(
-                        "/detect",
-                        {
-                            method: "POST",
-                            body: formData
-                        }
-                    );
-
-
-                if (!response.ok) {
-
-                    console.error(
-                        "Server error:",
-                        response.status
-                    );
-
-                    return;
-
-                }
-
-
-                const data =
-                    await response.json();
-
-
-                console.log(
-                    "Detection result:",
-                    data
-                );
-
-
-                if (data.error) {
-
-                    console.error(
-                        data.error
-                    );
-
-                    return;
-
-                }
-
-
-                updateDashboard(data);
-
-            }
-
-            catch(error) {
-
-                console.error(
-                    "Detection request failed:",
-                    error
-                );
-
-            }
-
-        },
-
-        "image/jpeg",
-
-        0.65
-
-    );
-
-}
-
-
-// ===============================
-// UPDATE DASHBOARD
-// ===============================
-
-function updateDashboard(data) {
-
-
-    document.getElementById(
-        "status"
-    ).innerText =
-        data.status || "READY";
-
-
-    document.getElementById(
-        "direction"
-    ).innerText =
-        data.direction || "WAIT";
-
-
-    document.getElementById(
-        "obstacle"
-    ).innerText =
-        data.obstacle || "NONE";
-
-
-    document.getElementById(
-        "route"
-    ).innerText =
-        data.route || "NORMAL ROUTE";
-
-
-    document.getElementById(
-        "signalText"
-    ).innerText =
-        data.signal || "WAIT";
-
-
-    updateSignal(
-        data.signal
-    );
-
-
-    updateObjects(
-        data.objects
-    );
-
-}
-
-
-// ===============================
-// TRAFFIC SIGNAL
-// ===============================
-
-function updateSignal(signal) {
-
-    const red =
-        document.getElementById(
-            "redLight"
-        );
-
-    const yellow =
-        document.getElementById(
-            "yellowLight"
-        );
-
-    const green =
-        document.getElementById(
-            "greenLight"
-        );
-
-
-    red.className = "light";
-
-    yellow.className = "light";
-
-    green.className = "light";
-
-
-    if (signal === "RED") {
-
-        red.className =
-            "light red";
-
-    }
-
-    else if (signal === "YELLOW") {
-
-        yellow.className =
-            "light yellow";
-
-    }
-
-    else if (signal === "GREEN") {
-
-        green.className =
-            "light green";
-
-    }
-
-}
-
-
-// ===============================
-// DETECTED OBJECTS
-// ===============================
-
-function updateObjects(objects) {
-
-    const box =
-        document.getElementById(
-            "objects"
-        );
-
-
-    if (
-        !objects ||
-        objects.length === 0
-    ) {
-
-        box.innerText =
-            "None";
-
-        return;
-
-    }
-
-
-    box.innerHTML = "";
-
-
-    objects.forEach(
-        function(object) {
-
-            const line =
-                document.createElement(
-                    "div"
-                );
-
-
-            line.innerText =
-                "🔹 " +
-                object.name +
-                " — " +
-                object.confidence +
-                "%";
-
-
-            box.appendChild(
-                line
-            );
-
-        }
-    );
-
-}
-
-</script>
+</div>
+</section>
+
+<section id="education">
+    <h2>Education</h2>
+    <p>B.Tech - Computer Science Engineering</p>
+</section>
+
+<section id="projects">
+    <h2>My Projects</h2>
+
+    <div class="project">
+        <h3>Student Management System</h3>
+        <p>Java based project for managing student records.</p>
+    </div>
+
+    <div class="project">
+        <h3>Personal Portfolio Website</h3>
+        <p>A website created using HTML and CSS.</p>
+    </div>
+
+    <div class="project">
+        <h3>Bank Management System</h3>
+        <p>A Java project for basic banking operations.</p>
+    </div>
+</section>
+
+<section id="contact">
+    <h2>Contact Me</h2>
+
+    <p>Email: ankita@example.com</p>
+
+    <p>
+        <a href="https://github.com/" target="_blank">GitHub</a>
+    </p>
+
+    <p>
+        <a href="https://www.linkedin.com/" target="_blank">LinkedIn</a>
+    </p>
+</section>
+    <h2>Contact</h2>
+    <p>Email: ankita@example.com</p>
+</section>
 
 </body>
 </html>
