@@ -7,54 +7,30 @@ import os
 
 app = Flask(__name__)
 
-# ==============================
-# YOLO MODEL
-# ==============================
-
+# YOLO model
 model = YOLO("yolo11n.pt")
 
-
-# ==============================
-# TRAFFIC SIGNAL
-# ==============================
-
+# Traffic signal timer
 signal_start_time = time.time()
 SIGNAL_DURATION = 5
 
 
 def get_traffic_signal():
-
-    elapsed = int(
-        time.time() - signal_start_time
-    )
-
-    signal_number = (
-        elapsed // SIGNAL_DURATION
-    ) % 3
+    elapsed = int(time.time() - signal_start_time)
+    signal_number = (elapsed // SIGNAL_DURATION) % 3
 
     if signal_number == 0:
         return "RED"
-
     elif signal_number == 1:
         return "YELLOW"
-
     else:
         return "GREEN"
 
 
-# ==============================
-# HOME PAGE
-# ==============================
-
 @app.route("/")
 def home():
-
     return render_template("index.html")
 
-
-# ==============================
-# MOBILE CAMERA DETECTION
-# ==============================
 
 @app.route("/detect", methods=["POST"])
 def detect():
@@ -64,11 +40,9 @@ def detect():
         file = request.files.get("frame")
 
         if file is None:
-
             return jsonify({
                 "error": "No camera frame received"
             }), 400
-
 
         image_bytes = file.read()
 
@@ -82,27 +56,28 @@ def detect():
             cv2.IMREAD_COLOR
         )
 
-
         if frame is None:
-
             return jsonify({
                 "error": "Invalid image"
             }), 400
 
+        # Resize for faster processing
+        frame = cv2.resize(
+            frame,
+            (640, 480)
+        )
 
-        # ==========================
-        # YOLO
-        # ==========================
-
+        # YOLO detection
         results = model(
             frame,
+            imgsz=416,
+            conf=0.35,
             verbose=False
         )
 
         boxes = results[0].boxes
 
         detected_objects = []
-
 
         for box in boxes:
 
@@ -114,73 +89,49 @@ def detect():
                 box.conf[0]
             )
 
-            class_name = model.names[
-                class_id
-            ]
+            class_name = model.names[class_id]
 
             detected_objects.append({
-
                 "name": class_name,
-
                 "confidence": round(
                     confidence * 100,
                     1
                 )
-
             })
-
-
-        # ==========================
-        # OBSTACLE
-        # ==========================
-
-        if len(detected_objects) > 0:
-
-            status = "STOPPED"
-
-            direction = "STOP"
-
-            obstacle = "DETECTED"
-
-            route = "OBSTACLE DETECTED - STOP"
-
-
-        else:
-
-            obstacle = "NONE"
-
-            signal = get_traffic_signal()
-
-
-            if signal == "RED":
-
-                status = "STOPPED"
-
-                direction = "STOP"
-
-                route = "RED SIGNAL - STOP"
-
-
-            elif signal == "YELLOW":
-
-                status = "WAITING"
-
-                direction = "WAIT"
-
-                route = "YELLOW SIGNAL - WAIT"
-
-
-            else:
-
-                status = "RUNNING"
-
-                direction = "GO STRAIGHT"
-
-                route = "GREEN SIGNAL - GO"
-
 
         signal = get_traffic_signal()
 
+        # Obstacle detected
+        if len(detected_objects) > 0:
+
+            status = "STOPPED"
+            direction = "STOP"
+            obstacle = "DETECTED"
+            route = "OBSTACLE DETECTED - STOP"
+
+        # Red signal
+        elif signal == "RED":
+
+            status = "STOPPED"
+            direction = "STOP"
+            obstacle = "NONE"
+            route = "RED SIGNAL - STOP"
+
+        # Yellow signal
+        elif signal == "YELLOW":
+
+            status = "WAITING"
+            direction = "WAIT"
+            obstacle = "NONE"
+            route = "YELLOW SIGNAL - WAIT"
+
+        # Green signal
+        else:
+
+            status = "RUNNING"
+            direction = "GO STRAIGHT"
+            obstacle = "NONE"
+            route = "GREEN SIGNAL - GO"
 
         return jsonify({
 
@@ -198,19 +149,12 @@ def detect():
 
         })
 
-
     except Exception as e:
 
         return jsonify({
-
             "error": str(e)
-
         }), 500
 
-
-# ==============================
-# START SERVER
-# ==============================
 
 if __name__ == "__main__":
 
@@ -222,11 +166,7 @@ if __name__ == "__main__":
     )
 
     app.run(
-
         host="0.0.0.0",
-
         port=port,
-
         debug=False
-
     )
