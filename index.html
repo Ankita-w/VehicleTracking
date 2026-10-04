@@ -10,8 +10,8 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: #111827;
-            color: white;
+            background: #eef2f7;
+            color: #172b4d;
             margin: 0;
             padding: 20px;
         }
@@ -20,12 +20,13 @@
             text-align: center;
         }
 
-        .camera-box {
+        .box {
             max-width: 700px;
             margin: 20px auto;
-            background: #1f2937;
-            padding: 15px;
-            border-radius: 15px;
+            background: white;
+            padding: 20px;
+            border-radius: 18px;
+            box-shadow: 0 5px 20px #0002;
         }
 
         video {
@@ -35,74 +36,49 @@
         }
 
         button {
-            padding: 12px 20px;
-            margin: 8px;
+            padding: 14px 20px;
+            margin: 8px 4px;
             border: none;
-            border-radius: 8px;
-            cursor: pointer;
+            border-radius: 10px;
             font-size: 16px;
-        }
-
-        #startBtn {
-            background: #22c55e;
             color: white;
-        }
-
-        #stopBtn {
-            background: #ef4444;
-            color: white;
-        }
-
-        .buttons {
-            text-align: center;
-        }
-
-        .dashboard {
-            max-width: 700px;
-            margin: auto;
-        }
-
-        .card {
-            background: #1f2937;
-            margin: 15px 0;
-            padding: 18px;
-            border-radius: 12px;
+            background: #172f55;
         }
 
         .value {
             font-size: 22px;
             font-weight: bold;
-            margin-top: 8px;
-        }
-
-        #objects {
-            line-height: 1.8;
+            margin-bottom: 15px;
         }
 
         .signal {
             display: flex;
-            gap: 15px;
             justify-content: center;
-            margin-top: 10px;
+            gap: 15px;
+            margin: 15px;
         }
 
         .light {
             width: 45px;
             height: 45px;
             border-radius: 50%;
-            background: #374151;
+            background: #ccc;
         }
 
-        .active-red {
+        .red {
             background: red;
         }
 
-        .active-yellow {
+        .yellow {
             background: yellow;
         }
 
-        .active-green {
+        .green {
             background: green;
+        }
+
+        #objects {
+            font-size: 18px;
         }
     </style>
 </head>
@@ -111,74 +87,64 @@
 
     <h1>🚗 Autonomous Vehicle Tracking</h1>
 
-    <div class="camera-box">
+    <div class="box">
 
-        <video id="camera" autoplay playsinline></video>
+        <h2>📱 Mobile Camera Detection</h2>
 
-        <div class="buttons">
-            <button id="startBtn">START CAMERA</button>
-            <button id="stopBtn">STOP CAMERA</button>
+        <video id="camera" autoplay playsinline muted></video>
+
+        <div style="text-align:center;">
+            <button onclick="startCamera()">START CAMERA</button>
+            <button onclick="stopCamera()">STOP CAMERA</button>
+        </div>
+
+        <p id="cameraStatus">Camera not started</p>
+
+    </div>
+
+
+    <div class="box">
+
+        <h2>🚘 Vehicle Status</h2>
+
+        <p>Status</p>
+        <div class="value" id="status">READY</div>
+
+        <p>Direction</p>
+        <div class="value" id="direction">WAIT</div>
+
+        <p>Obstacle</p>
+        <div class="value" id="obstacle">NONE</div>
+
+        <p>Route</p>
+        <div class="value" id="route">NORMAL ROUTE</div>
+
+    </div>
+
+
+    <div class="box">
+
+        <h2>🚦 Traffic Signal</h2>
+
+        <div class="signal">
+            <div id="redLight" class="light"></div>
+            <div id="yellowLight" class="light"></div>
+            <div id="greenLight" class="light"></div>
+        </div>
+
+        <div class="value" id="signalText">
+            WAIT
         </div>
 
     </div>
 
 
-    <div class="dashboard">
+    <div class="box">
 
-        <div class="card">
-            <h2>Vehicle Status</h2>
+        <h2>📦 Detected Objects</h2>
 
-            <p>Status:</p>
-            <div class="value" id="status">
-                READY
-            </div>
-
-            <p>Direction:</p>
-            <div class="value" id="direction">
-                WAIT
-            </div>
-
-            <p>Obstacle:</p>
-            <div class="value" id="obstacle">
-                NONE
-            </div>
-
-            <p>Route:</p>
-            <div class="value" id="route">
-                NORMAL ROUTE
-            </div>
-        </div>
-
-
-        <div class="card">
-
-            <h2>🚦 Traffic Signal</h2>
-
-            <div class="signal">
-
-                <div id="red" class="light"></div>
-
-                <div id="yellow" class="light"></div>
-
-                <div id="green" class="light"></div>
-
-            </div>
-
-            <p class="value" id="signalText">
-                WAIT
-            </p>
-
-        </div>
-
-
-        <div class="card">
-
-            <h2>📦 Detected Objects</h2>
-
-            <div id="objects">
-                No objects detected
-            </div>
-
+        <div id="objects">
+            None
         </div>
 
     </div>
@@ -187,410 +153,448 @@
     <canvas id="canvas" style="display:none;"></canvas>
 
 
-    <script>
+<script>
+
+let stream = null;
+let detecting = false;
+
+
+// ===============================
+// START CAMERA
+// ===============================
+
+async function startCamera() {
+
+    try {
+
+        if (!navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia) {
+
+            alert("Camera is not supported by this browser.");
+            return;
+
+        }
+
+
+        stream = await navigator.mediaDevices.getUserMedia({
+
+            video: {
+                facingMode: {
+                    ideal: "environment"
+                },
+
+                width: {
+                    ideal: 640
+                },
+
+                height: {
+                    ideal: 480
+                }
+            },
+
+            audio: false
+
+        });
+
 
         const video =
             document.getElementById("camera");
 
-        const canvas =
-            document.getElementById("canvas");
+        video.srcObject = stream;
 
-        const startBtn =
-            document.getElementById("startBtn");
-
-        const stopBtn =
-            document.getElementById("stopBtn");
+        await video.play();
 
 
-        let stream = null;
-
-        let detectionTimer = null;
-
-
-        // ==========================
-        // START CAMERA
-        // ==========================
-
-        startBtn.addEventListener(
-            "click",
-            async function () {
-
-                try {
-
-                    stream =
-                        await navigator.mediaDevices.getUserMedia({
-
-                            video: {
-                                facingMode: {
-                                    ideal: "environment"
-                                }
-                            },
-
-                            audio: false
-
-                        });
+        document.getElementById(
+            "cameraStatus"
+        ).innerText = "Camera started";
 
 
-                    video.srcObject = stream;
+        detecting = true;
 
-                    document.getElementById("status")
-                        .innerText = "RUNNING";
-
-
-                    startDetection();
+        detectLoop();
 
 
-                } catch (error) {
+    }
 
-                    console.error(error);
+    catch (error) {
 
-                    alert(
-                        "Please allow camera permission."
-                    );
+        console.error(
+            "Camera error:",
+            error
+        );
 
-                }
+        document.getElementById(
+            "cameraStatus"
+        ).innerText =
+            "Camera error: " + error.message;
 
+    }
+
+}
+
+
+// ===============================
+// STOP CAMERA
+// ===============================
+
+function stopCamera() {
+
+    detecting = false;
+
+
+    if (stream) {
+
+        stream.getTracks().forEach(
+            function(track) {
+                track.stop();
             }
         );
 
+        stream = null;
 
-        // ==========================
-        // STOP CAMERA
-        // ==========================
-
-        stopBtn.addEventListener(
-            "click",
-            function () {
-
-                stopCamera();
-
-            }
-        );
+    }
 
 
-        function stopCamera() {
-
-            if (stream) {
-
-                stream
-                    .getTracks()
-                    .forEach(
-                        track => track.stop()
-                    );
-
-                stream = null;
-
-            }
+    document.getElementById(
+        "camera"
+    ).srcObject = null;
 
 
-            video.srcObject = null;
+    document.getElementById(
+        "cameraStatus"
+    ).innerText =
+        "Camera stopped";
+
+}
 
 
-            if (detectionTimer) {
+// ===============================
+// DETECTION LOOP
+// ===============================
 
-                clearInterval(
-                    detectionTimer
-                );
+async function detectLoop() {
 
-                detectionTimer = null;
-
-            }
-
-
-            document.getElementById("status")
-                .innerText = "READY";
+    if (!detecting) {
+        return;
+    }
 
 
-            document.getElementById("direction")
-                .innerText = "WAIT";
-
-        }
+    await sendFrame();
 
 
-        // ==========================
-        // START DETECTION
-        // ==========================
+    setTimeout(
+        detectLoop,
+        2000
+    );
 
-        function startDetection() {
-
-            if (detectionTimer) {
-
-                clearInterval(
-                    detectionTimer
-                );
-
-            }
+}
 
 
-            detectionTimer =
-                setInterval(
-                    sendFrame,
-                    1500
-                );
+// ===============================
+// SEND FRAME TO FLASK
+// ===============================
 
-        }
+async function sendFrame() {
+
+    const video =
+        document.getElementById("camera");
+
+    const canvas =
+        document.getElementById("canvas");
 
 
-        // ==========================
-        // SEND FRAME TO FLASK
-        // ==========================
+    if (!stream) {
+        return;
+    }
 
-        async function sendFrame() {
 
-            if (!stream) {
+    if (
+        video.readyState <
+        HTMLMediaElement.HAVE_CURRENT_DATA
+    ) {
 
+        return;
+
+    }
+
+
+    if (
+        video.videoWidth === 0 ||
+        video.videoHeight === 0
+    ) {
+
+        return;
+
+    }
+
+
+    canvas.width =
+        video.videoWidth;
+
+    canvas.height =
+        video.videoHeight;
+
+
+    const ctx =
+        canvas.getContext("2d");
+
+
+    ctx.drawImage(
+        video,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    canvas.toBlob(
+
+        async function(blob) {
+
+            if (!blob) {
                 return;
-
             }
 
 
-            if (video.readyState < 2) {
-
-                return;
-
-            }
+            const formData =
+                new FormData();
 
 
-            canvas.width =
-                video.videoWidth;
-
-            canvas.height =
-                video.videoHeight;
-
-
-            const context =
-                canvas.getContext("2d");
-
-
-            context.drawImage(
-                video,
-                0,
-                0,
-                canvas.width,
-                canvas.height
+            formData.append(
+                "frame",
+                blob,
+                "camera.jpg"
             );
 
 
-            canvas.toBlob(
-                async function (blob) {
+            try {
 
-                    if (!blob) {
-
-                        return;
-
-                    }
-
-
-                    const formData =
-                        new FormData();
-
-
-                    formData.append(
-                        "frame",
-                        blob,
-                        "camera.jpg"
-                    );
-
-
-                    try {
-
-                        const response =
-                            await fetch(
-                                "/detect",
-                                {
-                                    method: "POST",
-                                    body: formData
-                                }
-                            );
-
-
-                        const data =
-                            await response.json();
-
-
-                        console.log(
-                            "Detection:",
-                            data
-                        );
-
-
-                        if (data.error) {
-
-                            console.error(
-                                data.error
-                            );
-
-                            return;
-
+                const response =
+                    await fetch(
+                        "/detect",
+                        {
+                            method: "POST",
+                            body: formData
                         }
+                    );
 
 
-                        updateDashboard(data);
+                if (!response.ok) {
+
+                    console.error(
+                        "Server error:",
+                        response.status
+                    );
+
+                    return;
+
+                }
 
 
-                    }
-
-                    catch (error) {
-
-                        console.error(
-                            "Detection error:",
-                            error
-                        );
-
-                    }
-
-                },
-                "image/jpeg",
-                0.75
-            );
-
-        }
+                const data =
+                    await response.json();
 
 
-        // ==========================
-        // UPDATE DASHBOARD
-        // ==========================
-
-        function updateDashboard(data) {
-
-            document.getElementById(
-                "status"
-            ).innerText =
-                data.status || "READY";
-
-
-            document.getElementById(
-                "direction"
-            ).innerText =
-                data.direction || "WAIT";
-
-
-            document.getElementById(
-                "obstacle"
-            ).innerText =
-                data.obstacle || "NONE";
-
-
-            document.getElementById(
-                "route"
-            ).innerText =
-                data.route || "NORMAL ROUTE";
-
-
-            document.getElementById(
-                "signalText"
-            ).innerText =
-                data.signal || "WAIT";
-
-
-            updateSignal(
-                data.signal
-            );
-
-
-            updateObjects(
-                data.objects
-            );
-
-        }
-
-
-        // ==========================
-        // TRAFFIC SIGNAL
-        // ==========================
-
-        function updateSignal(signal) {
-
-            const red =
-                document.getElementById("red");
-
-            const yellow =
-                document.getElementById("yellow");
-
-            const green =
-                document.getElementById("green");
-
-
-            red.className = "light";
-
-            yellow.className = "light";
-
-            green.className = "light";
-
-
-            if (signal === "RED") {
-
-                red.className =
-                    "light active-red";
-
-            }
-
-            else if (signal === "YELLOW") {
-
-                yellow.className =
-                    "light active-yellow";
-
-            }
-
-            else if (signal === "GREEN") {
-
-                green.className =
-                    "light active-green";
-
-            }
-
-        }
-
-
-        // ==========================
-        // OBJECTS
-        // ==========================
-
-        function updateObjects(objects) {
-
-            const objectBox =
-                document.getElementById(
-                    "objects"
+                console.log(
+                    "Detection result:",
+                    data
                 );
 
 
-            if (
-                !objects ||
-                objects.length === 0
-            ) {
+                if (data.error) {
 
-                objectBox.innerText =
-                    "No objects detected";
+                    console.error(
+                        data.error
+                    );
 
-                return;
+                    return;
+
+                }
+
+
+                updateDashboard(data);
 
             }
 
+            catch(error) {
 
-            let html = "";
+                console.error(
+                    "Detection request failed:",
+                    error
+                );
+
+            }
+
+        },
+
+        "image/jpeg",
+
+        0.65
+
+    );
+
+}
 
 
-            objects.forEach(
-                function (object) {
+// ===============================
+// UPDATE DASHBOARD
+// ===============================
 
-                    html +=
-                        "🔹 " +
-                        object.name +
-                        " — " +
-                        object.confidence +
-                        "%<br>";
+function updateDashboard(data) {
 
-                }
+
+    document.getElementById(
+        "status"
+    ).innerText =
+        data.status || "READY";
+
+
+    document.getElementById(
+        "direction"
+    ).innerText =
+        data.direction || "WAIT";
+
+
+    document.getElementById(
+        "obstacle"
+    ).innerText =
+        data.obstacle || "NONE";
+
+
+    document.getElementById(
+        "route"
+    ).innerText =
+        data.route || "NORMAL ROUTE";
+
+
+    document.getElementById(
+        "signalText"
+    ).innerText =
+        data.signal || "WAIT";
+
+
+    updateSignal(
+        data.signal
+    );
+
+
+    updateObjects(
+        data.objects
+    );
+
+}
+
+
+// ===============================
+// TRAFFIC SIGNAL
+// ===============================
+
+function updateSignal(signal) {
+
+    const red =
+        document.getElementById(
+            "redLight"
+        );
+
+    const yellow =
+        document.getElementById(
+            "yellowLight"
+        );
+
+    const green =
+        document.getElementById(
+            "greenLight"
+        );
+
+
+    red.className = "light";
+
+    yellow.className = "light";
+
+    green.className = "light";
+
+
+    if (signal === "RED") {
+
+        red.className =
+            "light red";
+
+    }
+
+    else if (signal === "YELLOW") {
+
+        yellow.className =
+            "light yellow";
+
+    }
+
+    else if (signal === "GREEN") {
+
+        green.className =
+            "light green";
+
+    }
+
+}
+
+
+// ===============================
+// DETECTED OBJECTS
+// ===============================
+
+function updateObjects(objects) {
+
+    const box =
+        document.getElementById(
+            "objects"
+        );
+
+
+    if (
+        !objects ||
+        objects.length === 0
+    ) {
+
+        box.innerText =
+            "None";
+
+        return;
+
+    }
+
+
+    box.innerHTML = "";
+
+
+    objects.forEach(
+        function(object) {
+
+            const line =
+                document.createElement(
+                    "div"
+                );
+
+
+            line.innerText =
+                "🔹 " +
+                object.name +
+                " — " +
+                object.confidence +
+                "%";
+
+
+            box.appendChild(
+                line
             );
 
-
-            objectBox.innerHTML =
-                html;
-
         }
+    );
 
-    </script>
+}
+
+</script>
 
 </body>
-
 </html>
