@@ -1,720 +1,406 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Autonomous Vehicle Without Road Markings</title>
 
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
-
-<title>Autonomous Vehicle</title>
+<link rel="stylesheet"
+ href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 <style>
-
-* {
-    box-sizing: border-box;
+*{box-sizing:border-box}
+body{
+ margin:0;font-family:Arial,sans-serif;
+ background:#edf2f7;color:#172033
 }
-
-body {
-
-    margin: 0;
-
-    font-family: Arial, sans-serif;
-
-    background: #eef2f7;
-
-    color: #222;
+header{
+ background:linear-gradient(120deg,#101b36,#176b87);
+ color:white;text-align:center;padding:22px 12px
 }
-
-header {
-
-    background: #172b4d;
-
-    color: white;
-
-    text-align: center;
-
-    padding: 22px;
+header h1{margin:0;font-size:25px}
+header p{margin:8px 0 0}
+.container{max-width:1200px;width:95%;margin:20px auto}
+.grid{
+ display:grid;grid-template-columns:1fr 1fr;gap:18px
 }
-
-header h1 {
-
-    margin: 0 0 8px 0;
-
+.card{
+ background:white;border-radius:15px;padding:18px;
+ margin-bottom:18px;box-shadow:0 4px 15px #17203316;
+ min-width:0
 }
-
-main {
-
-    display: flex;
-
-    justify-content: center;
-
-    align-items: flex-start;
-
-    gap: 20px;
-
-    padding: 25px 15px;
-
-    flex-wrap: wrap;
-
+h2{font-size:19px;margin:0 0 15px}
+#camera{
+ display:block;width:100%;height:300px;
+ background:#101827;border-radius:12px;object-fit:cover
 }
-
-.card {
-
-    background: white;
-
-    width: 350px;
-
-    padding: 22px;
-
-    border-radius: 15px;
-
-    box-shadow: 0 5px 15px #bbb;
-
+button{
+ padding:12px 16px;border:0;border-radius:9px;
+ font-weight:bold;cursor:pointer;margin:8px 5px 0 0
 }
-
-.card h2 {
-
-    color: #172b4d;
-
-    margin-top: 0;
-
+#startBtn{background:#13834b;color:white}
+#stopBtn{background:#c93636;color:white}
+button:disabled{opacity:.5}
+#message{margin-top:12px;font-size:14px}
+.status-grid{
+ display:grid;grid-template-columns:1fr 1fr;gap:10px
 }
-
-.card p {
-
-    padding: 10px 0;
-
-    border-bottom: 1px solid #ddd;
-
+.status-box{
+ background:#f1f5f9;border-radius:10px;padding:13px;
+ overflow-wrap:anywhere
 }
-
-.value {
-
-    float: right;
-
-    font-weight: bold;
-
+.status-box strong{
+ display:block;color:#64748b;font-size:12px;margin-bottom:8px
 }
-
-.camera {
-
-    width: 100%;
-
-    height: 270px;
-
-    background: black;
-
-    border-radius: 10px;
-
-    overflow: hidden;
-
-    margin-bottom: 15px;
-
+.status-box span{font-weight:bold;font-size:17px}
+#map{
+ height:470px;width:100%;border-radius:12px;
+ border:1px solid #dbe3ec;z-index:1
 }
-
-#camera {
-
-    width: 100%;
-
-    height: 100%;
-
-    object-fit: cover;
-
+.map-note{font-size:13px;color:#64748b;line-height:1.5}
+.signal-area{display:flex;gap:12px;align-items:center}
+.lamp{
+ width:25px;height:25px;border-radius:50%;
+ background:#d1d5db;border:2px solid #9ca3af
 }
-
-button {
-
-    padding: 12px 18px;
-
-    margin: 5px;
-
-    border: none;
-
-    border-radius: 8px;
-
-    background: #172b4d;
-
-    color: white;
-
-    cursor: pointer;
-
+.lamp.red.on{background:#ef4444;box-shadow:0 0 12px #ef4444}
+.lamp.yellow.on{background:#facc15;box-shadow:0 0 12px #facc15}
+.lamp.green.on{background:#22c55e;box-shadow:0 0 12px #22c55e}
+.signal-label{font-weight:bold}
+.object-item{
+ padding:10px;background:#f1f5f9;margin:7px 0;border-radius:8px
 }
-
-.traffic-light {
-
-    background: #222;
-
-    width: 100px;
-
-    padding: 10px;
-
-    margin: 15px auto;
-
-    border-radius: 18px;
-
+.legend{display:flex;gap:15px;flex-wrap:wrap;font-size:13px}
+.legend span{display:flex;align-items:center;gap:6px}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+footer{text-align:center;padding:15px;color:#64748b;font-size:12px}
+@media(max-width:760px){
+ .grid{grid-template-columns:1fr}
+ header h1{font-size:21px}
+ #camera{height:260px}
+ #map{height:380px}
+ .card{padding:14px}
+ button{width:100%}
 }
-
-.light {
-
-    width: 55px;
-
-    height: 55px;
-
-    border-radius: 50%;
-
-    margin: 8px auto;
-
-    opacity: 0.2;
-
-}
-
-.red {
-    background: red;
-}
-
-.yellow {
-    background: yellow;
-}
-
-.green {
-    background: limegreen;
-}
-
-.active {
-    opacity: 1;
-}
-
-.signal-card {
-    text-align: center;
-}
-
-#objects {
-
-    min-height: 30px;
-
-    font-weight: bold;
-
-}
-
-#message {
-
-    text-align: center;
-
-    color: #555;
-
-}
-
-footer {
-
-    text-align: center;
-
-    padding: 20px;
-
-    color: #666;
-
-}
-
 </style>
-
 </head>
 
 <body>
-
 <header>
-
-<h1>
-Autonomous Vehicle
-</h1>
-
-<p>
-Without Road Markings
-</p>
-
+ <h1>🚗 Autonomous Vehicle</h1>
+ <p>Without Road Markings — Educational Simulation</p>
 </header>
 
+<main class="container">
 
-<main>
+ <div class="grid">
+  <section class="card">
+   <h2>📷 Mobile Camera & Object Detection</h2>
+   <video id="camera" autoplay playsinline muted></video>
+   <button id="startBtn">▶ START CAMERA</button>
+   <button id="stopBtn" disabled>■ STOP CAMERA</button>
+   <div id="message">Press START CAMERA to begin.</div>
+  </section>
 
+  <section class="card">
+   <h2>🚘 Vehicle Dashboard</h2>
+   <div class="status-grid">
+    <div class="status-box">
+     <strong>STATUS</strong><span id="status">READY</span>
+    </div>
+    <div class="status-box">
+     <strong>DIRECTION</strong><span id="direction">WAIT</span>
+    </div>
+    <div class="status-box">
+     <strong>OBSTACLE</strong><span id="obstacle">NONE</span>
+    </div>
+    <div class="status-box">
+     <strong>ROUTE CONDITION</strong><span id="route">READY</span>
+    </div>
+   </div>
 
-<div class="card">
+   <h2 style="margin-top:22px">🚦 Current Signal</h2>
+   <div class="signal-area">
+    <span id="redLight" class="lamp red"></span>
+    <span id="yellowLight" class="lamp yellow"></span>
+    <span id="greenLight" class="lamp green"></span>
+    <span id="signalText" class="signal-label">SIGNAL: WAIT</span>
+   </div>
+   <p class="map-note">
+    Signals change automatically in this simulation.
+   </p>
+  </section>
+ </div>
 
-<h2>
-Vehicle Status
-</h2>
+ <section class="card">
+  <h2>🗺️ Road Map & Simulated Vehicle Route</h2>
+  <div id="map"></div>
+  <p class="map-note">
+   Blue line: example simulated route. 🚦 Markers: example signals.
+   🚗 Marker: simulated vehicle. The route and signals are illustrative,
+   not live traffic data or a verified drivable route.
+  </p>
+  <div class="legend">
+   <span><i class="dot" style="background:#2563eb"></i> Simulated route</span>
+   <span>🚗 Simulated vehicle</span>
+   <span>🚦 Example signal locations</span>
+  </div>
+ </section>
 
-<p>
-Status:
-
-<span
-class="value"
-id="status">
-READY
-</span>
-
-</p>
-
-<p>
-Direction:
-
-<span
-class="value"
-id="direction">
-WAIT
-</span>
-
-</p>
-
-<p>
-Obstacle:
-
-<span
-class="value"
-id="obstacle">
-NONE
-</span>
-
-</p>
-
-<p>
-Route:
-
-<span
-class="value"
-id="route">
-READY
-</span>
-
-</p>
-
-</div>
-
-
-<div class="card signal-card">
-
-<h2>
-Traffic Signal
-</h2>
-
-<div class="traffic-light">
-
-<div
-class="light red"
-id="red">
-</div>
-
-<div
-class="light yellow"
-id="yellow">
-</div>
-
-<div
-class="light green"
-id="green">
-</div>
-
-</div>
-
-<h3 id="signalText">
-RED - STOP
-</h3>
-
-</div>
-
-
-<div class="card">
-
-<h2>
-Mobile Camera Detection
-</h2>
-
-<div class="camera">
-
-<video
-id="camera"
-autoplay
-playsinline>
-</video>
-
-</div>
-
-<button onclick="startCamera()">
-START CAMERA
-</button>
-
-<button onclick="stopCamera()">
-STOP CAMERA
-</button>
-
-<p id="message">
-Press START CAMERA
-</p>
-
-</div>
-
-
-<div class="card">
-
-<h2>
-Detected Objects
-</h2>
-
-<div id="objects">
-None
-</div>
-
-</div>
+ <section class="card">
+  <h2>🔍 Detected Objects</h2>
+  <div id="objects">No detection yet.</div>
+ </section>
 
 </main>
 
-
 <footer>
-
-Autonomous Vehicle Without Road Markings
-
+ Educational project only — no real vehicle control.
 </footer>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
+const camera = document.getElementById("camera");
+const startBtn = document.getElementById("startBtn");
+const stopBtn = document.getElementById("stopBtn");
+const message = document.getElementById("message");
 
 let stream = null;
-
-let detectionTimer = null;
-
-let canvas =
-document.createElement("canvas");
-
-const video =
-document.getElementById("camera");
-
-const message =
-document.getElementById("message");
-
-
-async function startCamera() {
-
-    try {
-
-        stream =
-        await navigator.mediaDevices.getUserMedia({
-
-            video: {
-
-                facingMode: "environment"
-
-            },
-
-            audio: false
-
-        });
-
-        video.srcObject = stream;
-
-        message.innerText =
-        "Camera started";
-
-        clearInterval(
-            detectionTimer
-        );
-
-        detectionTimer =
-        setInterval(
-            sendFrame,
-            1500
-        );
-
-    }
-
-    catch(error) {
-
-        console.log(error);
-
-        message.innerText =
-        "Camera permission denied";
-
-        alert(
-            "Please allow camera permission."
-        );
-
-    }
-
-}
-
-
-function stopCamera() {
-
-    clearInterval(
-        detectionTimer
-    );
-
-    if(stream) {
-
-        stream
-        .getTracks()
-        .forEach(
-            track => track.stop()
-        );
-
-        stream = null;
-
-    }
-
-    video.srcObject = null;
-
-    document.getElementById(
-        "status"
-    ).innerText = "STOPPED";
-
-    document.getElementById(
-        "direction"
-    ).innerText = "STOP";
-
-    message.innerText =
-    "Camera stopped";
-
-}
-
-
-async function sendFrame() {
-
-    if(
-        !stream ||
-        video.readyState < 2
-    ) {
-
-        return;
-
-    }
-
-    canvas.width =
-    video.videoWidth;
-
-    canvas.height =
-    video.videoHeight;
-
-    const context =
-    canvas.getContext("2d");
-
-    context.drawImage(
-
-        video,
-
-        0,
-
-        0,
-
-        canvas.width,
-
-        canvas.height
-
-    );
-
-    canvas.toBlob(
-
-        async function(blob) {
-
-            const formData =
-            new FormData();
-
-            formData.append(
-
-                "frame",
-
-                blob,
-
-                "camera.jpg"
-
-            );
-
-            try {
-
-                const response =
-                await fetch(
-
-                    "/detect",
-
-                    {
-
-                        method: "POST",
-
-                        body: formData
-
-                    }
-
-                );
-
-                const data =
-                await response.json();
-
-                updateDashboard(
-                    data
-                );
-
-            }
-
-            catch(error) {
-
-                console.log(error);
-
-            }
-
-        },
-
-        "image/jpeg",
-
-        0.7
-
-    );
-
-}
-
-
-function updateDashboard(data) {
-
-    if(data.error) {
-
-        message.innerText =
-        data.error;
-
-        return;
-
-    }
-
-    document.getElementById(
-        "status"
-    ).innerText =
-    data.status;
-
-    document.getElementById(
-        "direction"
-    ).innerText =
-    data.direction;
-
-    document.getElementById(
-        "obstacle"
-    ).innerText =
-    data.obstacle;
-
-    document.getElementById(
-        "route"
-    ).innerText =
-    data.route;
-
-    updateSignal(
-        data.signal
-    );
-
-    let objectText = "";
-
-    if(
-        data.objects &&
-        data.objects.length > 0
-    ) {
-
-        data.objects.forEach(
-            function(object) {
-
-                objectText +=
-
-                object.name +
-
-                " (" +
-
-                object.confidence +
-
-                "%)<br>";
-
-            }
-        );
-
-    }
-
-    else {
-
-        objectText =
-        "No object detected";
-
-    }
-
-    document.getElementById(
-        "objects"
-    ).innerHTML =
-    objectText;
-
-}
-
+let detecting = false;
+let requestBusy = false;
+let vehicleIndex = 0;
+let latestStatus = "READY";
+let latestSignal = "RED";
+let timerId = null;
+
+// Example route in Pune. This is a simulation, not navigation.
+const routePoints = [
+ [18.5204,73.8567],
+ [18.5210,73.8573],
+ [18.5216,73.8580],
+ [18.5222,73.8586],
+ [18.5229,73.8592],
+ [18.5235,73.8599],
+ [18.5241,73.8605],
+ [18.5248,73.8612]
+];
+
+const map = L.map("map").setView(routePoints[0], 16);
+
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+ maxZoom: 19,
+ attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+}).addTo(map);
+
+const routeLine = L.polyline(routePoints, {
+ color:"#2563eb", weight:6, opacity:0.85
+}).addTo(map);
+
+map.fitBounds(routeLine.getBounds(), {padding:[25,25]});
+
+// Example traffic signals placed along the simulated route.
+const signalPoints = [
+ {pos:routePoints[2], name:"Signal A", color:"red"},
+ {pos:routePoints[5], name:"Signal B", color:"yellow"},
+ {pos:routePoints[7], name:"Signal C", color:"green"}
+];
+
+signalPoints.forEach(s => {
+ const marker = L.circleMarker(s.pos, {
+  radius:10,
+  color:"#ffffff",
+  weight:3,
+  fillColor:s.color,
+  fillOpacity:1
+ }).addTo(map);
+ marker.bindPopup("🚦 " + s.name + " — example signal");
+});
+
+// Simulated vehicle marker.
+const carIcon = L.divIcon({
+ html:'<div style="font-size:27px;text-shadow:0 1px 3px white">🚗</div>',
+ className:"",
+ iconSize:[32,32],
+ iconAnchor:[16,16]
+});
+
+const vehicleMarker = L.marker(routePoints[0], {
+ icon:carIcon
+}).addTo(map);
+vehicleMarker.bindPopup("🚗 Simulated Vehicle");
 
 function updateSignal(signal) {
+ latestSignal = signal || "RED";
 
-    document.getElementById(
-        "red"
-    ).classList.remove(
-        "active"
-    );
+ ["redLight","yellowLight","greenLight"].forEach(id => {
+  document.getElementById(id).classList.remove("on");
+ });
 
-    document.getElementById(
-        "yellow"
-    ).classList.remove(
-        "active"
-    );
-
-    document.getElementById(
-        "green"
-    ).classList.remove(
-        "active"
-    );
-
-    if(signal === "RED") {
-
-        document.getElementById(
-            "red"
-        ).classList.add(
-            "active"
-        );
-
-        document.getElementById(
-            "signalText"
-        ).innerText =
-        "RED - STOP";
-
-    }
-
-    else if(signal === "YELLOW") {
-
-        document.getElementById(
-            "yellow"
-        ).classList.add(
-            "active"
-        );
-
-        document.getElementById(
-            "signalText"
-        ).innerText =
-        "YELLOW - WAIT";
-
-    }
-
-    else {
-
-        document.getElementById(
-            "green"
-        ).classList.add(
-            "active"
-        );
-
-        document.getElementById(
-            "signalText"
-        ).innerText =
-        "GREEN - GO";
-
-    }
-
+ const ids = {RED:"redLight", YELLOW:"yellowLight", GREEN:"greenLight"};
+ if(ids[latestSignal]) {
+  document.getElementById(ids[latestSignal]).classList.add("on");
+ }
+ document.getElementById("signalText").innerText =
+  "SIGNAL: " + latestSignal;
 }
 
+function updateObjects(objects) {
+ const box = document.getElementById("objects");
+ box.replaceChildren();
+
+ if(!objects || objects.length === 0) {
+  box.textContent = "No objects detected in this frame.";
+  return;
+ }
+
+ objects.forEach(obj => {
+  const item = document.createElement("div");
+  item.className = "object-item";
+  item.textContent = "🔎 " + obj.name + " — " + obj.confidence + "%";
+  box.appendChild(item);
+ });
+}
+
+function updateDashboard(data) {
+ latestStatus = data.status || "READY";
+
+ document.getElementById("status").textContent = latestStatus;
+ document.getElementById("direction").textContent = data.direction || "WAIT";
+ document.getElementById("obstacle").textContent = data.obstacle || "NONE";
+ document.getElementById("route").textContent = data.route || "READY";
+
+ updateSignal(data.signal);
+ updateObjects(data.objects);
+}
+
+function moveSimulatedVehicle() {
+ if(!detecting || latestStatus !== "RUNNING") return;
+
+ vehicleIndex = (vehicleIndex + 1) % routePoints.length;
+ vehicleMarker.setLatLng(routePoints[vehicleIndex]);
+ map.panTo(routePoints[vehicleIndex]);
+}
+
+// This loop runs only while the user has started the camera.
+function startMovement() {
+ if(timerId) clearInterval(timerId);
+ timerId = setInterval(moveSimulatedVehicle, 3000);
+}
+
+async function detectLoop() {
+ if(!detecting || requestBusy) return;
+
+ if(camera.readyState < 2 || !camera.videoWidth) {
+  setTimeout(detectLoop, 800);
+  return;
+ }
+
+ requestBusy = true;
+
+ try {
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.min(camera.videoWidth, 640);
+  canvas.height = Math.round(
+   camera.videoHeight * canvas.width / camera.videoWidth
+  );
+
+  canvas.getContext("2d").drawImage(
+   camera, 0, 0, canvas.width, canvas.height
+  );
+
+  const blob = await new Promise(resolve =>
+   canvas.toBlob(resolve, "image/jpeg", 0.7)
+  );
+
+  if(!blob) throw new Error("Could not capture camera frame.");
+
+  const formData = new FormData();
+  formData.append("frame", blob, "camera.jpg");
+
+  const response = await fetch("/detect", {
+   method:"POST",
+   body:formData
+  });
+
+  const data = await response.json();
+
+  if(!response.ok || data.error) {
+   throw new Error(data.error || "Detection request failed.");
+  }
+
+  if(detecting) {
+   updateDashboard(data);
+   message.textContent = "Camera active. Detection updated.";
+  }
+
+ } catch(error) {
+  console.error(error);
+  message.textContent = "Detection error: " + error.message;
+ } finally {
+  requestBusy = false;
+  if(detecting) setTimeout(detectLoop, 2000);
+ }
+}
+
+startBtn.addEventListener("click", async () => {
+ try {
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+   throw new Error("Camera needs HTTPS and a supported browser.");
+  }
+
+  stream = await navigator.mediaDevices.getUserMedia({
+   video:{facingMode:{ideal:"environment"}},
+   audio:false
+  });
+
+  camera.srcObject = stream;
+  await camera.play();
+
+  detecting = true;
+  startBtn.disabled = true;
+  stopBtn.disabled = false;
+  message.textContent = "Camera started. Sending frames for detection...";
+  startMovement();
+  detectLoop();
+
+ } catch(error) {
+  console.error(error);
+  message.textContent = "Camera could not start: " + error.message;
+  if(stream) stream.getTracks().forEach(track => track.stop());
+  stream = null;
+ }
+});
+
+stopBtn.addEventListener("click", () => {
+ detecting = false;
+
+ if(stream) {
+  stream.getTracks().forEach(track => track.stop());
+ }
+ stream = null;
+ camera.srcObject = null;
+
+ if(timerId) {
+  clearInterval(timerId);
+  timerId = null;
+ }
+
+ startBtn.disabled = false;
+ stopBtn.disabled = true;
+ latestStatus = "READY";
+ document.getElementById("status").textContent = "READY";
+ document.getElementById("direction").textContent = "WAIT";
+ message.textContent = "Camera stopped. Map simulation is paused.";
+});
+
+// Initial display. Backend updates the actual simulated signal during detection.
+updateSignal("RED");
+
+window.addEventListener("resize", () => {
+ setTimeout(() => map.invalidateSize(), 150);
+});
+setTimeout(() => map.invalidateSize(), 400);
 </script>
-
 </body>
-
 </html>
